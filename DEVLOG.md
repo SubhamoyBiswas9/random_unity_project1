@@ -6,6 +6,10 @@ Implement a small but robust memory card game while focusing on correctness, mai
 
 ## Key Decisions
 
+### Separation of Gameplay Logic
+
+During development I refactored the core gameplay rules into standalone C# classes such as `MatchingService`, `ScoreCalculator`, and `ShuffleUtility`. This separates business logic from Unity-specific behaviour, making the systems easier to understand, maintain, and unit test.
+
 ### Input Handling
 
 One of the biggest requirements was allowing continuous player input while previous matches were still resolving. Instead of locking the entire board during comparisons, each card manages its own interaction state while the match system queues and validates comparisons independently.
@@ -19,6 +23,10 @@ The board uses a seeded random generator so the same seed always produces the sa
 ### Save System
 
 The save file stores information using json in PlayerPrefs to restore a consistent gameplay state after restarting the application, including card states, score, and current progress.
+
+### Unit Testing
+
+To improve reliability, I extracted the core game logic into testable classes and added Unity EditMode unit tests covering matching, scoring, deterministic shuffling, and save/load functionality. This helped verify gameplay rules independently from the Unity runtime.
 
 ## Approach I Abandoned
 
