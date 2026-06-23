@@ -55,7 +55,7 @@ public class MatchHandler : MonoBehaviour
 
             MatchingService matcher = new();
 
-            MatchResult result = matcher.Evaluate(a, b);
+            MatchResult result = matcher.Evaluate(a.Data,b.Data);
 
             if (result == MatchResult.Match)
             {
