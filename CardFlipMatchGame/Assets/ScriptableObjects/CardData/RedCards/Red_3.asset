@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873ba9ddcc7dc3f4d98c6cf4675af7c4, type: 3}
   m_Name: Red_3
   m_EditorClassIdentifier: 
-  frontSprite: {fileID: 0}
-  baseSprite: {fileID: 0}
+  frontSprite: {fileID: 21300000, guid: b8b717cb57b5a7f42a3e47eba7bf5888, type: 3}
+  baseSprite: {fileID: 21300000, guid: ddf9fdef22b846a409ed544e7c51c0be, type: 3}
