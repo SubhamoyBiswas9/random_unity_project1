@@ -45,7 +45,7 @@ public class GridSpawner : MonoBehaviour
         {
             
             List<CardDataSO> shuffledPool = new(cardPool);
-            Shuffle(shuffledPool);
+            ShuffleUtility.Shuffle(shuffledPool, shuffleSeed);
 
             for (int i = 0; i < total / 2; i++)
             {
@@ -54,7 +54,7 @@ public class GridSpawner : MonoBehaviour
                 selected.Add(data);
             }
 
-            Shuffle(selected);
+            ShuffleUtility.Shuffle(selected, shuffleSeed);
         }
 
         // --- Screen size ---
@@ -130,17 +130,6 @@ public class GridSpawner : MonoBehaviour
 
                 index++;
             }
-        }
-    }
-
-    void Shuffle(List<CardDataSO> list)
-    {
-        System.Random random = new System.Random(shuffleSeed);
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            int rand = random.Next(i, list.Count);
-            (list[i], list[rand]) = (list[rand], list[i]);
         }
     }
 }

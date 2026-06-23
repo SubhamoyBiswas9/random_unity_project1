@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class ScoreSystem : MonoBehaviour
 {
-    public int score { get; private set; }
-    public int comboCount { get; private set; } = 0;
+    ScoreCalculator calculator = new();
+
+    public int score => calculator.Score;
+
+    public int comboCount => calculator.Combo;
 
     MatchHandler matchHandler;
 
@@ -14,28 +17,23 @@ public class ScoreSystem : MonoBehaviour
     public void Init(MatchHandler matchHandler)
     {
         this.matchHandler = matchHandler;
-        matchHandler.OnPairEvaluated += OnPairEvaluated;
 
-        score = 0;
-        comboCount = 0;
+        calculator = new ScoreCalculator();
+
+        matchHandler.OnPairEvaluated += OnPairEvaluated;
     }
 
     void OnPairEvaluated(bool isMatch)
     {
         if (isMatch)
         {
-            comboCount++;
-
-            int basePoints = 10;
-            int comboBonus = comboCount > 1 ? comboCount * 5 : 0;
-
-            score += basePoints + comboBonus;
+            calculator.RegisterMatch();
 
             Debug.Log($"Match! Combo: {comboCount}, Score: {score}");
         }
         else
         {
-            comboCount = 0;
+            calculator.RegisterMismatch();
         }
 
         OnScoreChanged?.Invoke(score, comboCount);
@@ -43,7 +41,7 @@ public class ScoreSystem : MonoBehaviour
 
     public void SetScore(int score)
     {
-        this.score = score;
+        calculator.SetScore(score);
     }
 
     void OnDisable()

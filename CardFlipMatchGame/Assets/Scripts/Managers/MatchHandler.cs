@@ -53,9 +53,11 @@ public class MatchHandler : MonoBehaviour
 
             yield return new WaitForSeconds(0.4f);
 
-            bool isMatch = (a.Data == b.Data);
+            MatchingService matcher = new();
 
-            if (isMatch)
+            MatchResult result = matcher.Evaluate(a, b);
+
+            if (result == MatchResult.Match)
             {
                 a.SetMatched();
                 b.SetMatched();
@@ -67,7 +69,7 @@ public class MatchHandler : MonoBehaviour
 
                 AudioManager.Instance.PlayMatch();
             }
-            else
+            else if(result == MatchResult.Mismatch)
             {
                 a.Flip(false);
                 b.Flip(false);
@@ -75,7 +77,7 @@ public class MatchHandler : MonoBehaviour
                 AudioManager.Instance.PlayMismatch();
             }
 
-            OnPairEvaluated?.Invoke(isMatch);
+            OnPairEvaluated?.Invoke(result == MatchResult.Match);
         }
 
         isProcessing = false;
