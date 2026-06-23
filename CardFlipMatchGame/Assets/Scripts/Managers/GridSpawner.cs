@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class GridSpawner : MonoBehaviour
 {
@@ -8,6 +9,8 @@ public class GridSpawner : MonoBehaviour
     [SerializeField] Transform parent;
 
     [SerializeField] Camera mainCam;
+
+    [SerializeField] int shuffleSeed;
 
     [field: SerializeField] public List<CardDataSO> cardPool { get; private set; }
 
@@ -132,9 +135,11 @@ public class GridSpawner : MonoBehaviour
 
     void Shuffle(List<CardDataSO> list)
     {
+        System.Random random = new System.Random(shuffleSeed);
+
         for (int i = 0; i < list.Count; i++)
         {
-            int rand = Random.Range(i, list.Count);
+            int rand = random.Next(i, list.Count);
             (list[i], list[rand]) = (list[rand], list[i]);
         }
     }
