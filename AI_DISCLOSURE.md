@@ -9,6 +9,7 @@ Usage included:
 - Brainstorming architecture decisions.
 - Grid spawning of cards and match handling architecture
 - Small code suggestions for isolated problems.
+- Learning and implementing unit testing
 - Documentation writing (DEVLOG, ARCHITECTURE, and this disclosure).
 
 All gameplay implementation, debugging, integration, testing, and final code decisions were completed by me.
