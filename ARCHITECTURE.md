@@ -2,7 +2,7 @@
 
 ## Overview
 
-The project follows a modular, manager-based architecture where each system is responsible for a single aspect of the game. Gameplay logic is separated from card presentation, allowing core mechanics such as matching, scoring, saving, and level progression to remain independent of the visual implementation.
+The project follows a modular, manager-based architecture where Unity-specific behaviour is separated from core gameplay logic. Systems communicate primarily through events, while reusable game rules are implemented as standalone C# classes that can be tested independently using Unity EditMode tests.
 
 ## Main Components
 
@@ -11,95 +11,120 @@ The project follows a modular, manager-based architecture where each system is r
 Acts as the entry point for a game session.
 
 Responsibilities:
-- Loads saved progress (if available)
-- Requests board generation
+- Loads saved progress
+- Generates the board
 - Initializes gameplay systems
 - Restores score and progression
-- Shows the preview phase for a new game
-- Saves progress on application pause/quit and after successful matches
+- Displays the preview phase for a new game
+- Saves progress on application pause, quit, and successful matches
 
 ### GridSpawner
 
-Responsible for creating the game board.
+Responsible for generating the board.
 
 Responsibilities:
-- Supports all required grid layouts through `GridConfigSO`
-- Generates card pairs
-- Performs deterministic seeded shuffling
-- Calculates responsive card size based on available screen space
-- Restores board state when loading a saved game
+- Supports multiple grid layouts through `GridConfigSO`
+- Generates matching card pairs
+- Performs deterministic seeded shuffling using `ShuffleUtility`
+- Calculates responsive card scaling based on available screen space
+- Restores board state from saved data
 
 ### MatchHandler
 
-Owns the core gameplay logic.
+Coordinates gameplay interactions.
 
 Responsibilities:
-- Registers every card
-- Receives card click events
-- Maintains a queue of flipped cards
-- Processes pairs asynchronously
-- Detects matches and mismatches
-- Prevents invalid interactions such as matching already matched or already face-up cards
-- Raises an event when a pair has been evaluated
+- Registers cards
+- Receives player input events
+- Queues flipped cards
+- Resolves comparisons asynchronously
+- Plays match and mismatch animations
+- Raises events when a pair has been evaluated
 
-Using a queue allows players to continue selecting cards while previous comparisons are still resolving, satisfying the continuous input requirement without locking the entire board.
+The matching decision itself is delegated to `MatchingService`, allowing the gameplay rule to remain independent from Unity components.
 
-### Card & CardController
+### Card
 
-The visual card (`Card`) is responsible only for presentation:
+Represents the visual behaviour of a card.
+
+Responsibilities:
 - Flip animation
 - Match animation
 - Visual state
-- Forwarding click events
+- Click forwarding
 
-`CardController` acts as a lightweight wrapper that associates a `CardDataSO` with its corresponding `Card` instance while tracking gameplay state such as whether the card has already been matched.
+The class contains presentation logic only and does not determine whether two cards form a valid match.
 
-This keeps gameplay logic separate from rendering behaviour.
+### CardController
+
+Associates a `Card` with its corresponding `CardDataSO` while tracking gameplay state such as whether the card has already been matched.
 
 ### LevelManager
 
-Responsible for overall game progression.
+Tracks overall game progression.
 
 Responsibilities:
-- Tracks moves
-- Tracks matched pairs
-- Detects level completion
-- Detects level failure
-- Raises game-over events
-- Clears save data when a game finishes
+- Move count
+- Match progress
+- Win detection
+- Lose detection
+- Clearing saved progress after game completion
 
 ### ScoreSystem
 
-Handles all scoring independently from the match logic.
+Acts as a bridge between gameplay events and the scoring logic.
 
 Responsibilities:
 - Listens for pair evaluation events
-- Awards points for successful matches
-- Applies combo bonuses
-- Resets combo streaks after mismatches
+- Updates score through `ScoreCalculator`
 - Broadcasts score updates to the UI
 
 ### SaveSystem
 
 Provides persistence using PlayerPrefs.
 
-The save contains:
-- Board layout (card indices)
-- Matched card states
+Stored data includes:
+- Board layout
+- Matched cards
 - Current score
-- Number of matched pairs
-- Number of moves
-
-Saving only the data required to reconstruct gameplay keeps the save format compact while restoring a consistent game state.
+- Moves
+- Matched pairs
 
 ### AudioManager
 
-A singleton responsible for playing gameplay sound effects including:
-- Card flip
-- Match
-- Mismatch
-- Victory
-- Defeat
+Responsible for gameplay sound effects.
+
+## Core Logic Classes
+
+### MatchingService
+
+A pure C# class responsible only for determining whether two cards form a valid match.
+
+### ScoreCalculator
+
+Contains all scoring and combo calculations independently of Unity.
+
+### ShuffleUtility
+
+Implements deterministic seeded shuffling as a reusable utility.
+
+These classes contain no MonoBehaviour dependencies, making them suitable for fast EditMode unit testing.
+
+## Data Assets
+
+### CardDataSO
+
+Stores the visual data associated with each card.
+
+### GridConfigSO
+
+Defines:
+- Rows
+- Columns
+- Card spacing
+- Padding
+
+Using ScriptableObjects keeps gameplay configuration data separate from code.
 
 ## Data Flow
 
@@ -112,49 +137,36 @@ InputManager
       ▼
 Card
       │
-(OnClicked)
-      │
       ▼
 MatchHandler
       │
+      ▼
+MatchingService
+      │
+      ▼
+OnPairEvaluated Event
+      │
       ├────────► ScoreSystem
+      │              │
+      │              ▼
+      │       ScoreCalculator
       │
       ├────────► LevelManager
       │
-      └────────► GameInitializer (save progress)
+      └────────► GameInitializer
                      │
                      ▼
                  SaveSystem
 ```
 
-## Data Assets
-
-The project uses ScriptableObjects for configuration and content.
-
-### CardDataSO
-
-Stores the visual data for each card:
-- Front sprite
-- Base sprite
-
-### GridConfigSO
-
-Defines the board configuration:
-- Rows
-- Columns
-- Spacing
-- Padding
-
-Using ScriptableObjects allows layouts and card content to be modified without changing code.
-
 ## Design Decisions
 
-The game uses an event-driven approach for communication between gameplay systems. `MatchHandler` exposes an `OnPairEvaluated` event that is consumed by `ScoreSystem`, `LevelManager`, and `GameInitializer`. This reduces coupling between systems and allows each manager to respond independently when gameplay events occur.
+Gameplay rules were intentionally separated from MonoBehaviour classes wherever practical. This improves maintainability, allows the core systems to be tested independently, and reduces coupling between gameplay logic and Unity presentation code.
 
-The `Card` class is intentionally focused on presentation while gameplay state is maintained by `CardController`, keeping rendering concerns separate from game rules.
+Communication between managers is primarily event-driven, reducing direct dependencies between gameplay systems.
 
 ## Trade-off
 
-To keep the prototype focused, the project uses a manager-based architecture with direct references assigned through the Unity Inspector instead of introducing dependency injection or a more complex service architecture.
+For this prototype I chose a manager-based architecture with inspector references instead of introducing dependency injection or a more complex service architecture.
 
-For a larger production project, I would replace some of these direct references with dependency injection or an event bus to improve scalability and testability, but I felt the current approach provided a good balance between simplicity, readability, and maintainability for the scope of this assessment.
+Given more development time, I would explore dependency injection and a more event-driven architecture to further improve scalability and automated testing.
